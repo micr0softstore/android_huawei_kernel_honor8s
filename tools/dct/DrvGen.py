@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -10,10 +10,9 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See http://www.gnu.org/licenses/gpl-2.0.html for more details.
+# See http://www.gnu.org/licenses/gpl-2.0.html for more details.	
 
-import os
-import sys
+import os, sys
 import getopt
 import traceback
 import subprocess
@@ -24,30 +23,27 @@ sys.dont_write_bytecode = True
 sys.path.append('.')
 sys.path.append('..')
 
-# Import chip definitions and utilities
-from obj.ChipObj import (
-    ChipObj,
-    Everest,
-    Olympus,
-    MT6757_P25,
-    Rushmore,
-    Whitney,
-    MT6759,
-    MT6763,
-    MT6750S,
-    MT6758,
-    MT6739,
-    MT8695,
-    MT6771,
-    MT6775,
-    MT6779,
-)
+from obj.ChipObj import ChipObj
+from obj.ChipObj import Everest
+from obj.ChipObj import Olympus
+from obj.ChipObj import MT6757_P25
+from obj.ChipObj import Rushmore
+from obj.ChipObj import Whitney
+from obj.ChipObj import MT6759
+from obj.ChipObj import MT6763
+from obj.ChipObj import MT6750S
+from obj.ChipObj import MT6758
+from obj.ChipObj import MT6739
+from obj.ChipObj import MT8695
+from obj.ChipObj import MT6771
+from obj.ChipObj import MT6775
+from obj.ChipObj import MT6779
 
-from utility.util import LogLevel, log
-
+from utility.util import LogLevel
+from utility.util import log
 
 def usage():
-    print('''
+    print '''
 usage: DrvGen [dws_path] [file_path] [log_path] [paras]...
 
 options and arguments:
@@ -55,38 +51,36 @@ options and arguments:
 dws_path    :    dws file path
 file_path   :    where you want to put generated files
 log_path    :    where to store the log files
-paras       :    parameters for generating wanted file
-''')
-
+paras        :    parameter for generate wanted file
+'''
 
 def is_oldDws(path, gen_spec):
     if not os.path.exists(path):
-        log(LogLevel.error, f'Cannot find {path}')
+        log(LogLevel.error, 'Can not find %s' %(path))
         sys.exit(-1)
 
     try:
-        xml.dom.minidom.parse(dws_path)
-    except Exception as e:
-        log(LogLevel.warn, f'{dws_path} is not XML format, trying to use old DCT!')
+        root = xml.dom.minidom.parse(dws_path)
+    except Exception, e:
+        log(LogLevel.warn, '%s is not xml format, try to use old DCT!' %(dws_path))
         if len(gen_spec) == 0:
-            log(LogLevel.warn, 'Please use old DCT UI to generate all files!')
+            log(LogLevel.warn, 'Please use old DCT UI to gen all files!')
             return True
         old_dct = os.path.join(sys.path[0], 'old_dct', 'DrvGen')
-        cmd = f'{old_dct} {dws_path} {gen_path} {log_path} {gen_spec[0]}'
-        if subprocess.call(cmd, shell=True) == 0:
+        cmd = old_dct + ' ' + dws_path + ' ' + gen_path + ' ' + log_path + ' ' + gen_spec[0]
+        if 0 == subprocess.call(cmd, shell=True):
             return True
         else:
-            log(LogLevel.error, f'{dws_path} format error!')
+            log(LogLevel.error, '%s format error!' %(dws_path))
             sys.exit(-1)
 
     return False
-
 
 if __name__ == '__main__':
     opts, args = getopt.getopt(sys.argv[1:], '')
 
     if len(args) == 0:
-        msg = 'Too few arguments!'
+        msg = 'Too less arguments!'
         usage()
         log(LogLevel.error, msg)
         sys.exit(-1)
@@ -96,71 +90,97 @@ if __name__ == '__main__':
     log_path = ''
     gen_spec = []
 
-    # Parse arguments
+    # get DWS file path from parameters
     dws_path = os.path.abspath(args[0])
 
+    # get parameters from input
     if len(args) == 1:
         gen_path = os.path.dirname(dws_path)
         log_path = os.path.dirname(dws_path)
+
     elif len(args) == 2:
         gen_path = os.path.abspath(args[1])
         log_path = os.path.dirname(dws_path)
+
     elif len(args) == 3:
         gen_path = os.path.abspath(args[1])
         log_path = os.path.abspath(args[2])
+
     elif len(args) >= 4:
         gen_path = os.path.abspath(args[1])
         log_path = os.path.abspath(args[2])
-        gen_spec = args[3:]
+        for i in range(3,len(args)):
+            gen_spec.append(args[i])
 
-    log(LogLevel.info, f'DWS file path is {dws_path}')
-    log(LogLevel.info, f'Gen files path is {gen_path}')
-    log(LogLevel.info, f'Log files path is {log_path}')
+    log(LogLevel.info, 'DWS file path is %s' %(dws_path))
+    log(LogLevel.info, 'Gen files path is %s' %(gen_path))
+    log(LogLevel.info, 'Log files path is %s' %(log_path))
+
     for item in gen_spec:
-        log(LogLevel.info, f'Parameter is {item}')
+        log(LogLevel.info, 'Parameter is %s' %(item))
 
-    # Validate paths
-    for path in (dws_path, gen_path, log_path):
-        if not os.path.exists(path):
-            log(LogLevel.error, f'Cannot find "{path}", path does not exist!')
-            sys.exit(-1)
+
+
+    # check DWS file path
+    if not os.path.exists(dws_path):
+        log(LogLevel.error, 'Can not find "%s", file not exist!' %(dws_path))
+        sys.exit(-1)
+
+    if not os.path.exists(gen_path):
+        log(LogLevel.error, 'Can not find "%s", gen path not exist!' %(gen_path))
+        sys.exit(-1)
+
+    if not os.path.exists(log_path):
+        log(LogLevel.error, 'Can not find "%s", log path not exist!' %(log_path))
+        sys.exit(-1)
 
     if is_oldDws(dws_path, gen_spec):
         sys.exit(0)
 
     chipId = ChipObj.get_chipId(dws_path)
-    log(LogLevel.info, f'chip id: {chipId}')
-
-    chip_map = {
-        'MT6797': Everest,
-        'MT6757': Olympus,
-        'MT6757-P25': MT6757_P25,
-        'KIBOPLUS': MT6757_P25,
-        'MT6570': Rushmore,
-        'MT6799': Whitney,
-        'MT6763': MT6763,
-        'MT6759': MT6759,
-        'MT6750S': MT6750S,
-        'MT6758': MT6758,
-        'MT6739': MT6739,
-        'MT8695': MT8695,
-        'MT6771': MT6771,
-        'MT6775': MT6771,
-        'MT6765': MT6771,
-        'MT3967': MT6771,
-        'MT6761': MT6771,
-        'MT6779': MT6779,
-    }
-
-    chip_class = chip_map.get(chipId, ChipObj)
-    chipObj = chip_class(dws_path, gen_path)
+    log(LogLevel.info, 'chip id: %s' %(chipId))
+    chipObj = None
+    if cmp(chipId, 'MT6797') == 0:
+        chipObj = Everest(dws_path, gen_path)
+    elif cmp(chipId, 'MT6757') == 0:
+        chipObj = Olympus(dws_path, gen_path)
+    elif cmp(chipId, 'MT6757-P25') == 0:
+        chipObj = MT6757_P25(dws_path, gen_path)
+    elif cmp(chipId, 'KIBOPLUS') == 0:
+        chipObj = MT6757_P25(dws_path, gen_path)
+    elif cmp(chipId, 'MT6570') == 0:
+        chipObj = Rushmore(dws_path, gen_path)
+    elif cmp(chipId, 'MT6799') == 0:
+        chipObj = Whitney(dws_path, gen_path)
+    elif cmp(chipId, 'MT6763') == 0:
+        chipObj = MT6763(dws_path, gen_path)
+    elif cmp(chipId, 'MT6759') == 0:
+        chipObj = MT6759(dws_path, gen_path)
+    elif cmp(chipId, 'MT6750S') == 0:
+        chipObj = MT6750S(dws_path, gen_path)
+    elif cmp(chipId, 'MT6758') == 0:
+        chipObj = MT6758(dws_path, gen_path)
+    elif cmp(chipId, 'MT6739') == 0:
+        chipObj = MT6739(dws_path, gen_path)
+    elif cmp(chipId, 'MT8695') == 0:
+        chipObj = MT8695(dws_path, gen_path)
+    elif cmp(chipId, 'MT6771') == 0 or \
+         cmp(chipId, 'MT6775') == 0 or \
+         cmp(chipId, 'MT6765') == 0 or \
+         cmp(chipId, 'MT3967') == 0 or \
+         cmp(chipId, 'MT6761') == 0:
+        chipObj = MT6771(dws_path, gen_path)
+    elif cmp(chipId, 'MT6779') == 0:
+        chipObj = MT6779(dws_path, gen_path)
+    else:
+        chipObj = ChipObj(dws_path, gen_path)
 
     if not chipObj.parse():
-        log(LogLevel.error, f'Parse {dws_path} failed!')
+        log(LogLevel.error, 'Parse %s fail!' %(dws_path))
         sys.exit(-1)
 
     if not chipObj.generate(gen_spec):
-        log(LogLevel.error, 'Generate files failed!')
+        log(LogLevel.error, 'Generate files fail!')
         sys.exit(-1)
 
     sys.exit(0)
