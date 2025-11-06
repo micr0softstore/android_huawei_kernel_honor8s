@@ -109,10 +109,13 @@ int squashfs_readpages_block(struct page *target_page,
 
 {
 	struct squashfs_page_actor *actor;
-	struct inode *inode = mapping->host;
 	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
 	int start_index, end_index, file_end, actor_pages, res;
 	int mask = (1 << (msblk->block_log - PAGE_SHIFT)) - 1;
+	struct inode *i = target_page->mapping->host;
+	struct squashfs_cache_entry *buffer = squashfs_get_datablock(i->i_sb,
+						 block, bsize);
+	int bytes = buffer->length, res = buffer->error, n, offset = 0;
 
 	/*
 	 * If readpage() is called on an uncompressed datablock, we can just
@@ -150,7 +153,16 @@ int squashfs_readpages_block(struct page *target_page,
 	if (!actor)
 		return -ENOMEM;
 
-	res = squashfs_read_data_async(inode->i_sb, block, bsize, NULL,
-				       actor);
-	return res < 0 ? res : 0;
+		if (page[n] == NULL)
+			continue;
+
+		squashfs_fill_page(page[n], buffer, offset, avail);
+		unlock_page(page[n]);
+		if (page[n] != target_page)
+			put_page(page[n]);
+	}
+
+out:
+	squashfs_cache_put(buffer);
+	return res;
 }
